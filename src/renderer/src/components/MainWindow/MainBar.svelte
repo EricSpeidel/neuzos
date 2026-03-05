@@ -131,6 +131,14 @@
     electronApi.send("session_launcher.launch_session", sessionId, mode);
   }
 
+  function launchAllSavedSessions(mode: 'session' | 'focus' | 'focus_fullscreen' = 'session') {
+    mainWindowState.sessions
+      .filter(session => session.partitionOverwrite !== 'browser')
+      .forEach(session => {
+        launchSession(session.id, mode);
+      });
+  }
+
 </script>
 <div
   id="titlebar"
@@ -181,6 +189,15 @@
           </Tabs.Content>
           <Tabs.Content value="sessions">
             <div class="grid gap-4 grid-cols-1 w-full h-full max-h-[33vh] overflow-y-auto px-6">
+              <Button
+                variant="default"
+                size="sm"
+                class="text-xs"
+                onclick={() => launchAllSavedSessions('session')}
+                disabled={mainWindowState.sessions.filter(session => session.partitionOverwrite === 'browser').length === mainWindowState.sessions.length}
+              >
+                Launch All Saved Sessions
+              </Button>
               {#each mainWindowState.sessions as sessionTab (sessionTab.id)}
                 {@const isBrowser = sessionTab.partitionOverwrite === 'browser'}
                 {#if !isBrowser}

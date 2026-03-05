@@ -350,6 +350,34 @@ function createSessionLauncherWindow(): void {
   }
 }
 
+function getSessionPopupWindowConfig(sessionData: any) {
+  return {
+    width: sessionData?.window?.width ?? neuzosConfig.window.session.width,
+    height: sessionData?.window?.height ?? neuzosConfig.window.session.height,
+    maximized: sessionData?.window?.maximized ?? neuzosConfig.window.session.maximized,
+  };
+}
+
+function persistSessionPopupWindowConfig(sessionId: string): void {
+  if (!sessionWindow || !neuzosConfig) return;
+
+  const sessionConfig = neuzosConfig.sessions.find((s: any) => s.id === sessionId);
+  if (!sessionConfig) return;
+
+  const normalBounds = sessionWindow.isMaximized()
+    ? sessionWindow.getNormalBounds()
+    : sessionWindow.getBounds();
+
+  sessionConfig.window = {
+    ...(sessionConfig.window || {}),
+    width: normalBounds.width,
+    height: normalBounds.height,
+    maximized: sessionWindow.isMaximized(),
+  };
+
+  saveConfig(neuzosConfig);
+}
+
 function createSessionWindow(mode: LaunchMode, sessionId: string): void {
   // Load config first
   if (!neuzosConfig) {
@@ -380,11 +408,12 @@ function createSessionWindow(mode: LaunchMode, sessionId: string): void {
 
   // Determine if we should start fullscreen
   const startFullscreen = mode === 'focus_fullscreen';
+  const sessionWindowConfig = getSessionPopupWindowConfig(sessionData);
 
   // Create the session window
   sessionWindow = new BrowserWindow({
-    width: neuzosConfig.window.session.width,
-    height: neuzosConfig.window.session.height,
+    width: sessionWindowConfig.width,
+    height: sessionWindowConfig.height,
     show: false,
     frame: false,
     autoHideMenuBar: true,
@@ -431,11 +460,15 @@ function createSessionWindow(mode: LaunchMode, sessionId: string): void {
     sessionWindow?.webContents.setZoomFactor(neuzosConfig.window.session.zoom);
 
     // Maximize if configured and not starting in fullscreen - must happen after show() with slight delay
-    if (!startFullscreen && neuzosConfig.window.session.maximized) {
+    if (!startFullscreen && sessionWindowConfig.maximized) {
       setImmediate(() => {
         sessionWindow?.maximize();
       });
     }
+  });
+
+  sessionWindow.on("close", () => {
+    persistSessionPopupWindowConfig(sessionId);
   });
 
   sessionWindow.on("closed", () => {
