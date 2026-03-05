@@ -32,6 +32,12 @@
     electronApi.send("session_launcher.launch_session", sessionId, mode);
   }
 
+  function launchAllSessions(mode: 'session' | 'focus' | 'focus_fullscreen' = 'session') {
+    sessions.forEach(session => {
+      launchSession(session.id, mode);
+    });
+  }
+
   function closeWindow() {
     electronApi.send("session_launcher.close");
   }
@@ -104,6 +110,17 @@
           <p class="text-muted-foreground text-sm">No sessions available</p>
         </div>
       {:else}
+        <div class="mb-2">
+          <Button
+            variant="default"
+            size="sm"
+            class="w-full text-xs h-8"
+            onclick={() => launchAllSessions('session')}
+            disabled={sessions.length === 0}
+          >
+            Launch All Saved Sessions
+          </Button>
+        </div>
         <div class="grid gap-2">
           {#each sessions as session}
             <Card.Root class="p-3 gap-2">
