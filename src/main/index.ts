@@ -774,6 +774,10 @@ function registerSessionKeybinds(mode: LaunchMode) {
     });
 
     ipcMain.on("session_window.close", () => {
+      const sessionId = (sessionWindow as any)?.sessionData?.sessionId;
+      if (sessionId) {
+        persistSessionPopupWindowConfig(sessionId);
+      }
       globalShortcut.unregisterAll();
       sessionWindow?.destroy();
       sessionWindow = null;
