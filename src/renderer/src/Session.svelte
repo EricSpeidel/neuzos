@@ -35,6 +35,9 @@
   onMount(async () => {
     sessionData = await electronApi.invoke("session_window.get_data");
 
+    // Auto-start sessions so windows load immediately after launch.
+    started = true;
+
     // Load config to get userAgent setting
     try {
       neuzosConfig = await electronApi.invoke("config.load", false);
