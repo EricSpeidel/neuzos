@@ -354,6 +354,8 @@ function getSessionPopupWindowConfig(sessionData: any) {
   return {
     width: sessionData?.window?.width ?? neuzosConfig.window.session.width,
     height: sessionData?.window?.height ?? neuzosConfig.window.session.height,
+    x: sessionData?.window?.x,
+    y: sessionData?.window?.y,
     maximized: sessionData?.window?.maximized ?? neuzosConfig.window.session.maximized,
   };
 }
@@ -387,6 +389,8 @@ function persistSessionPopupWindowConfig(sessionId: string): void {
     ...(sessionConfig.window || {}),
     width: normalBounds.width,
     height: normalBounds.height,
+    x: normalBounds.x,
+    y: normalBounds.y,
     maximized: sessionWindow.isMaximized(),
   };
 
@@ -430,6 +434,8 @@ function createSessionWindow(mode: LaunchMode, sessionId: string): void {
   sessionWindow = new BrowserWindow({
     width: sessionWindowConfig.width,
     height: sessionWindowConfig.height,
+    ...(Number.isFinite(sessionWindowConfig.x) ? {x: sessionWindowConfig.x} : {}),
+    ...(Number.isFinite(sessionWindowConfig.y) ? {y: sessionWindowConfig.y} : {}),
     show: false,
     frame: false,
     autoHideMenuBar: true,
