@@ -1,5 +1,5 @@
 import {app, shell, BrowserWindow, Menu, dialog, session, ipcMain, globalShortcut, screen} from "electron";
-import {join} from "path";
+import {basename, join} from "path";
 import {electronApp, optimizer, is} from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import * as fs from "node:fs";
@@ -56,6 +56,33 @@ const allowedCommandLineSwitches = [
 let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let sessionWindow: BrowserWindow | null = null;
+
+function bringAllWindowsToForeground(): void {
+  const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed());
+
+  windows.forEach((win) => {
+    if (win.isMinimized()) {
+      win.restore();
+    }
+
+    win.show();
+    win.moveTop();
+    win.setAlwaysOnTop(true);
+    win.setAlwaysOnTop(false);
+    win.focus();
+  });
+}
+
+function closeAllWindowsInCurrentProcess(): void {
+  globalShortcut.unregisterAll();
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.destroy();
+    }
+  });
+
+  app.quit();
+}
 
 let exitCount: number = 0;
 let mainWindowShortcutsEnabled: boolean = true;
@@ -170,9 +197,61 @@ const allowedEventKeybinds = {
 
 const userDataPath = app.getPath("userData");
 const configDirectoryPath = join(userDataPath, "/neuzos_config/");
+const bringToFrontSignalPath = join(configDirectoryPath, "/bring_to_front.signal");
+const closeAllWindowsSignalPath = join(configDirectoryPath, "/close_all_windows.signal");
+let bringToFrontSignalWatcher: fs.FSWatcher | null = null;
 
 if (!app.getPath("userData").includes("neuzos_config")) {
   fs.mkdirSync(configDirectoryPath, {recursive: true});
+}
+
+function ensureSignalFile(signalPath: string): void {
+  if (!fs.existsSync(signalPath)) {
+    fs.writeFileSync(signalPath, String(Date.now()));
+  }
+}
+
+function broadcastSignal(signalPath: string): void {
+  ensureSignalFile(signalPath);
+  fs.writeFileSync(signalPath, String(Date.now()));
+}
+
+function broadcastBringToFrontSignal(): void {
+  broadcastSignal(bringToFrontSignalPath);
+}
+
+function broadcastCloseAllWindowsSignal(): void {
+  broadcastSignal(closeAllWindowsSignalPath);
+}
+
+function watchBringToFrontSignal(): void {
+  ensureSignalFile(bringToFrontSignalPath);
+  ensureSignalFile(closeAllWindowsSignalPath);
+
+  if (bringToFrontSignalWatcher) {
+    return;
+  }
+
+  bringToFrontSignalWatcher = fs.watch(configDirectoryPath, (_eventType, filename) => {
+    if (!filename) {
+      return;
+    }
+
+    const changedFile = filename.toString();
+
+    if (changedFile === basename(bringToFrontSignalPath)) {
+      bringAllWindowsToForeground();
+      return;
+    }
+
+    if (changedFile === basename(closeAllWindowsSignalPath)) {
+      closeAllWindowsInCurrentProcess();
+    }
+  });
+
+  bringToFrontSignalWatcher.on("error", (err) => {
+    console.error("Bring-to-front watcher error:", err);
+  });
 }
 
 
@@ -732,6 +811,7 @@ function registerSessionKeybinds(mode: LaunchMode) {
   app.whenReady().then(async () => {
     // Set app user model id for windows
     electronApp.setAppUserModelId("com.neuzos");
+    watchBringToFrontSignal();
     // Default open or close DevTools by F12 in development
     // and ignore CommandOrControl + R in production.
     app.on("browser-window-created", (_, window) => {
@@ -763,6 +843,16 @@ function registerSessionKeybinds(mode: LaunchMode) {
 
     ipcMain.on("session_launcher.minimize", () => {
       sessionWindow?.minimize();
+    });
+
+    ipcMain.on("app.bring_windows_to_front", () => {
+      broadcastBringToFrontSignal();
+      bringAllWindowsToForeground();
+    });
+
+    ipcMain.on("app.close_all_windows", () => {
+      broadcastCloseAllWindowsSignal();
+      closeAllWindowsInCurrentProcess();
     });
 
     // Setup IPC handlers for session window
@@ -1140,6 +1230,8 @@ function registerSessionKeybinds(mode: LaunchMode) {
 
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
+    bringToFrontSignalWatcher?.close();
+    bringToFrontSignalWatcher = null;
   });
 
   // Add additional safety cleanup on process events

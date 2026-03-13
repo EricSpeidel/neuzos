@@ -84,6 +84,14 @@ export const neuzosBridge = {
     toggleShortcuts: (enabled: boolean) => {
       electronApi?.send("session_window.toggle_shortcuts", enabled);
     }
+  },
+  app: {
+    bringWindowsToFront: () => {
+      electronApi?.send("app.bring_windows_to_front");
+    },
+    closeAllWindows: () => {
+      electronApi?.send("app.close_all_windows");
+    }
   }
 }
 

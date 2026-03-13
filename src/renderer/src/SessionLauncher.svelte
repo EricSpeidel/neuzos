@@ -5,7 +5,7 @@
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import type {NeuzSession} from "$lib/types";
-  import {Minus, Settings2, X} from "@lucide/svelte";
+  import {BringToFront, Minus, Settings2, X} from "@lucide/svelte";
   import {Separator} from "$lib/components/ui/separator";
   import { setElectronContext, getElectronContext } from "$lib/contexts/electronContext";
   import { setNeuzosBridgeContext } from "$lib/contexts/neuzosBridgeContext";
@@ -46,6 +46,14 @@
     electronApi.send("session_launcher.minimize");
   }
 
+  function bringWindowsToFront() {
+    neuzosBridge.app.bringWindowsToFront();
+  }
+
+  function closeAllWindows() {
+    neuzosBridge.app.closeAllWindows();
+  }
+
   function getIconPath(session: NeuzSession): string {
     return `icons/${session.icon.slug}.png`;
   }
@@ -82,6 +90,9 @@
         <Button size="icon-xs" variant="outline" onclick={openSettings} class="cursor-pointer">
           <Settings2 class="size-3.5"/>
         </Button>
+        <Button size="icon-xs" variant="outline" onclick={bringWindowsToFront} class="cursor-pointer" title="Bring all windows to front">
+          <BringToFront class="size-3.5"/>
+        </Button>
         <Separator orientation="vertical" class="h-4"/>
 
         <Button
@@ -110,7 +121,7 @@
           <p class="text-muted-foreground text-sm">No sessions available</p>
         </div>
       {:else}
-        <div class="mb-2">
+        <div class="mb-2 grid gap-1.5">
           <Button
             variant="default"
             size="sm"
@@ -119,6 +130,14 @@
             disabled={sessions.length === 0}
           >
             Launch All Saved Sessions
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            class="w-full text-xs h-8"
+            onclick={closeAllWindows}
+          >
+            Close All Running Windows
           </Button>
         </div>
         <div class="grid gap-2">
