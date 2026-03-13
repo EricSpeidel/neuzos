@@ -88,6 +88,9 @@ export const neuzosBridge = {
   app: {
     bringWindowsToFront: () => {
       electronApi?.send("app.bring_windows_to_front");
+    },
+    closeAllWindows: () => {
+      electronApi?.send("app.close_all_windows");
     }
   }
 }

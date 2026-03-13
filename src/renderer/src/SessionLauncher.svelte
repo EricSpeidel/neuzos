@@ -50,6 +50,10 @@
     neuzosBridge.app.bringWindowsToFront();
   }
 
+  function closeAllWindows() {
+    neuzosBridge.app.closeAllWindows();
+  }
+
   function getIconPath(session: NeuzSession): string {
     return `icons/${session.icon.slug}.png`;
   }
@@ -117,7 +121,7 @@
           <p class="text-muted-foreground text-sm">No sessions available</p>
         </div>
       {:else}
-        <div class="mb-2">
+        <div class="mb-2 grid gap-1.5">
           <Button
             variant="default"
             size="sm"
@@ -126,6 +130,14 @@
             disabled={sessions.length === 0}
           >
             Launch All Saved Sessions
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            class="w-full text-xs h-8"
+            onclick={closeAllWindows}
+          >
+            Close All Running Windows
           </Button>
         </div>
         <div class="grid gap-2">
