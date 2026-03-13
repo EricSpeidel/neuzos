@@ -57,6 +57,22 @@ let mainWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 let sessionWindow: BrowserWindow | null = null;
 
+function bringAllWindowsToForeground(): void {
+  const windows = BrowserWindow.getAllWindows().filter((win) => !win.isDestroyed());
+
+  windows.forEach((win) => {
+    if (win.isMinimized()) {
+      win.restore();
+    }
+
+    win.show();
+    win.moveTop();
+    win.setAlwaysOnTop(true);
+    win.setAlwaysOnTop(false);
+    win.focus();
+  });
+}
+
 let exitCount: number = 0;
 let mainWindowShortcutsEnabled: boolean = true;
 let sessionWindowShortcutsEnabled: boolean = true;
@@ -763,6 +779,10 @@ function registerSessionKeybinds(mode: LaunchMode) {
 
     ipcMain.on("session_launcher.minimize", () => {
       sessionWindow?.minimize();
+    });
+
+    ipcMain.on("app.bring_windows_to_front", () => {
+      bringAllWindowsToForeground();
     });
 
     // Setup IPC handlers for session window

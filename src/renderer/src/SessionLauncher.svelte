@@ -5,7 +5,7 @@
   import * as Card from "$lib/components/ui/card";
   import {Button} from "$lib/components/ui/button";
   import type {NeuzSession} from "$lib/types";
-  import {Minus, Settings2, X} from "@lucide/svelte";
+  import {BringToFront, Minus, Settings2, X} from "@lucide/svelte";
   import {Separator} from "$lib/components/ui/separator";
   import { setElectronContext, getElectronContext } from "$lib/contexts/electronContext";
   import { setNeuzosBridgeContext } from "$lib/contexts/neuzosBridgeContext";
@@ -46,6 +46,10 @@
     electronApi.send("session_launcher.minimize");
   }
 
+  function bringWindowsToFront() {
+    neuzosBridge.app.bringWindowsToFront();
+  }
+
   function getIconPath(session: NeuzSession): string {
     return `icons/${session.icon.slug}.png`;
   }
@@ -81,6 +85,9 @@
       <div class="flex gap-1">
         <Button size="icon-xs" variant="outline" onclick={openSettings} class="cursor-pointer">
           <Settings2 class="size-3.5"/>
+        </Button>
+        <Button size="icon-xs" variant="outline" onclick={bringWindowsToFront} class="cursor-pointer" title="Bring all windows to front">
+          <BringToFront class="size-3.5"/>
         </Button>
         <Separator orientation="vertical" class="h-4"/>
 
