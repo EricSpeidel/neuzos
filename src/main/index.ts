@@ -507,6 +507,7 @@ function createSessionWindow(mode: LaunchMode, sessionId: string): void {
 
   // Determine if we should start fullscreen
   const startFullscreen = mode === 'focus_fullscreen';
+  const keepWindowInForeground = mode === 'session' || mode === 'focus' || mode === 'focus_fullscreen';
   const sessionWindowConfig = getSessionPopupWindowConfig(sessionData);
 
   // Create the session window
@@ -519,6 +520,7 @@ function createSessionWindow(mode: LaunchMode, sessionId: string): void {
     frame: false,
     autoHideMenuBar: true,
     fullscreen: startFullscreen,
+    alwaysOnTop: keepWindowInForeground,
     ...(process.platform === "linux" ? {icon} : {}),
     webPreferences: {
       contextIsolation: true,
